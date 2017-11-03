@@ -1,0 +1,53 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "AWS CloudFormation Template for {{stack_name}}",
+  "Resources" : {
+
+    "EssayScoreInputTopic": {
+      "Type" : "AWS::SNS::Topic",
+      "Properties" : {
+         "TopicName" : "{{dmf_essayscore_input_topic_name}}"
+      }
+    },
+    "JsonConversionLmdaRole":{
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {{ json_conversion_lmda_assumerole_policy }},
+        "ManagedPolicyArns": {{json_conversion_lmda_role_managed_policy_arns|to_json}},      
+        "Policies": [ {
+          "PolicyName": "{{json_conversion_lmda_sns_policy_name}}",
+          "PolicyDocument":{{json_conversion_lmda_sns_policy}}
+          },
+          {
+            "PolicyName": "{{json_conversion_lmda_s3_policy_name}}",
+            "PolicyDocument":{{json_conversion_lmda_s3_policy}}
+          },
+          {
+            "PolicyName": "{{json_conversion_lmda_kms_policy_name}}",
+            "PolicyDocument":{{json_conversion_lmda_kms_policy}}
+          }],
+        "RoleName": "{{json_conversion_lmda_role_name}}"
+      }
+    },
+    "JsonConversionLmda":{
+      "Type" : "AWS::Lambda::Function",
+      "Properties" : {
+        "Code" : {
+          "S3Bucket": "{{dmf_lambda_artifacts_s3}}",
+          "S3Key": "{{json_conversion_lmda_code_s3_key}}"
+        },
+        "Description" : "{{json_conversion_lmda_description}}",
+        "FunctionName" : "{{json_conversion_lmda_function_name}}",
+        "Environment": {
+          "Variables": {{json_conversion_lmda_environment}}
+          },
+        "Handler" : "{{json_conversion_lmda_handler}}",
+        "MemorySize" : {{json_conversion_lmda_memory_size}},
+        "Role" : { "Fn::GetAtt" : ["JsonConversionLmdaRole", "Arn"] },
+        "Runtime" : "{{json_conversion_lmda_runtime}}",
+        "Timeout" : {{json_conversion_lmda_timeout}},
+        "Tags" : {{json_conversion_lmda_tags|to_json}}
+      }
+    }
+  }
+}

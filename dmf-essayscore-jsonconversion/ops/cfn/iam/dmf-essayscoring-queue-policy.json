@@ -1,0 +1,17 @@
+{
+  "Version": "2012-10-17",
+  "Id": "{{dmf_essayscoring_queue_arn}}/SQSDefaultPolicy",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "SQS:SendMessage",
+      "Resource": "{{dmf_essayscoring_queue_arn}}",
+      "Condition": {
+        "ArnEquals": {
+          "aws:SourceArn": "{{dmf_essayscore_input_topic_arn}}"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+---
+dmf_aws_vpc_id:
+dmf_aws_subnet_ids:
+dmf_aws_region: us-east-1
+dmf_aws_account_id:
+dmf_aws_security_group_id:
+dmf_lambda_artifacts_s3: "dmf-artifacts"
+
+#Cloudformation stack
+stack_name: "{{env}}-dmf-essayscore-jsonconversion-stack"
+
+#S3
+essayscore_download_bucket_name: "{{env}}-dmf-essayscore"
+essayscore_download_bucket_arn: "arn:aws:s3:::{{essayscore_download_bucket_name}}"
+
+#SNS
+dmf_essayscore_input_topic_name: "{{env}}-dmf-essayscoring-input-topic"
+dmf_essayscore_input_topic_arn: "arn:aws:sns:{{dmf_aws_region}}:{{dmf_aws_account_id}}:{{dmf_essayscore_input_topic_name}}"
+
+#KMS
+dmf_s3_key_id:
+dmf_s3_key_arn: "arn:aws:kms:{{dmf_aws_region}}:{{dmf_aws_account_id}}:key/{{dmf_s3_key_id}}"
+
+#IAM
+json_conversion_lmda_role_name: "{{json_conversion_lmda_function_name}}-role"
+json_conversion_lmda_assumerole_policy: "{{lookup('template','cfn/iam/dmf-essayscore-json-conversion-lmda-assumerole-policy.json', convert_data=True ) | to_json}}"
+json_conversion_lmda_role_managed_policy_arns:
+  - "arn:aws:iam::aws:policy/AWSOpsWorksCloudWatchLogs"
+json_conversion_lmda_sns_policy_name: "{{json_conversion_lmda_role_name}}-sns-policy"
+json_conversion_lmda_sns_policy: "{{lookup('template','cfn/iam/dmf-essayscore-json-conversion-lmda-sns-policy.json', convert_data=True ) | to_json}}"
+json_conversion_lmda_s3_policy_name: "{{json_conversion_lmda_role_name}}-s3-policy"
+json_conversion_lmda_s3_policy: "{{lookup('template','cfn/iam/dmf-essayscore-json-conversion-lmda-s3-policy.json', convert_data=True ) | to_json}}"
+json_conversion_lmda_kms_policy_name: "{{json_conversion_lmda_role_name}}-kms-policy"
+json_conversion_lmda_kms_policy: "{{lookup('template','cfn/iam/dmf-essayscore-json-conversion-lmda-kms-policy.json', convert_data=True ) | to_json}}"
+
+#Lambda
+json_conversion_lmda_code_s3_key: "dmf-essayscore-jsonconversion/dmf-essayscore-jsonconversion-{{version}}.zip"
+json_conversion_lmda_description: "{{env}} environment: Lambda function to convert essay score delimited data to json"
+json_conversion_lmda_environment: '{"DMF_ESSAYSCORING_INPUT_TOPIC_ARN": "{{dmf_essayscore_input_topic_arn}}"}'
+
+json_conversion_lmda_function_name: "{{env}}-dmf-essayscore-json-conversion-lmda"
+json_conversion_lmda_handler: "org.collegeboard.dmf.essayscore.jsonconversion.JsonConversionHandler"
+json_conversion_lmda_memory_size: 512
+json_conversion_lmda_runtime: "java8"
+json_conversion_lmda_timeout: 300
+json_conversion_lmda_tags:
+  - Key: "cb_program"
+    Value: "data_exchange"
+  - Key: "env_intent"
+    Value: "{{env}}"
+  - Key: "engineer"
+    Value: "dmf"
+  - Key: "asset_id"
+    Value: "dmfcloud"
+  - Key: "system_id"
+    Value: "dmfcloud"
