@@ -1,0 +1,22 @@
+---
+dmf_aws_vpc_id: vpc-32691c4b
+dmf_aws_subnet_ids:
+  - "subnet-7e69f024"
+  - "subnet-4c719928"
+  - "subnet-f94627d5"
+dmf_aws_security_group_id: "sg-71808700"
+dmf_aws_account_id: 619285404645
+dmf_s3_key_id: "994b5661-c319-4da4-8b4e-e0cf5bbdb465"
+
+#Cloudformation stack
+#stack_name: "dmf-essayscore-jsonconversion-stack"
+
+#S3
+#essayscore_download_bucket_name: "dmf-essayscoring"
+
+#SNS
+#dmf_essayscore_input_topic_name: "dmf-essayscoring-input-topic"
+
+#Lambda
+#json_conversion_lmda_description: "Lambda function to convert essay score delimited data to json"
+#json_conversion_lmda_function_name: "dmf-essayscore-json-conversion-lmda"

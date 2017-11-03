@@ -1,0 +1,56 @@
+---
+dmf_aws_vpc_id:
+dmf_aws_subnet_ids:
+dmf_aws_region: us-east-1
+dmf_aws_account_id:
+dmf_aws_security_group_id:
+dmf_lambda_artifacts_s3: "dmf-artifacts"
+
+#Cloudformation stack
+stack_name: "{{env}}-dmf-xml-jsonconversion-stack"
+
+#S3
+asmtresponse_xml_download_bucket_name: "{{env}}-dmf-asmtresponse"
+asmtresponse_xml_download_bucket_arn: "arn:aws:s3:::{{asmtresponse_xml_download_bucket_name}}"
+
+#SNS
+dmf_input_topic_name: "{{env}}-dmf-essayscoring-input-topic"
+dmf_input_topic_arn: "arn:aws:sns:{{dmf_aws_region}}:{{dmf_aws_account_id}}:{{dmf_input_topic_name}}"
+
+#KMS
+dmf_s3_key_id:
+dmf_s3_key_arn: "arn:aws:kms:{{dmf_aws_region}}:{{dmf_aws_account_id}}:key/{{dmf_s3_key_id}}"
+
+#IAM
+xml_json_conversion_lmda_role_name: "{{xml_json_conversion_lmda_function_name}}-role"
+xml_json_conversion_lmda_assumerole_policy: "{{lookup('template','cfn/iam/dmf-xml-json-conversion-lmda-assumerole-policy.json', convert_data=True ) | to_json}}"
+xml_json_conversion_lmda_role_managed_policy_arns:
+  - "arn:aws:iam::aws:policy/AWSOpsWorksCloudWatchLogs"
+xml_json_conversion_lmda_sns_policy_name: "{{xml_json_conversion_lmda_role_name}}-sns-policy"
+xml_json_conversion_lmda_sns_policy: "{{lookup('template','cfn/iam/dmf-xml-json-conversion-lmda-sns-policy.json', convert_data=True ) | to_json}}"
+xml_json_conversion_lmda_s3_policy_name: "{{xml_json_conversion_lmda_role_name}}-s3-policy"
+xml_json_conversion_lmda_s3_policy: "{{lookup('template','cfn/iam/dmf-xml-json-conversion-lmda-s3-policy.json', convert_data=True ) | to_json}}"
+xml_json_conversion_lmda_kms_policy_name: "{{xml_json_conversion_lmda_role_name}}-kms-policy"
+xml_json_conversion_lmda_kms_policy: "{{lookup('template','cfn/iam/dmf-xml-json-conversion-lmda-kms-policy.json', convert_data=True ) | to_json}}"
+
+#Lambda
+xml_json_conversion_lmda_code_s3_key: "dmf-xml-jsonconversion/dmf-xml-jsonconversion-{{version}}.zip"
+xml_json_conversion_lmda_description: "{{env}} environment: Lambda function to convert xml to json"
+xml_json_conversion_lmda_environment: '{"DMF_INPUT_TOPIC_ARN": "{{dmf_input_topic_arn}}"}'
+
+xml_json_conversion_lmda_function_name: "{{env}}-dmf-xml-json-conversion-lmda"
+xml_json_conversion_lmda_handler: "org.collegeboard.dmf.xml.jsonconversion.JsonConversionHandler"
+xml_json_conversion_lmda_memory_size: 512
+xml_json_conversion_lmda_runtime: "java8"
+xml_json_conversion_lmda_timeout: 300
+xml_json_conversion_lmda_tags:
+  - Key: "cb_program"
+    Value: "data_exchange"
+  - Key: "env_intent"
+    Value: "{{env}}"
+  - Key: "engineer"
+    Value: "dmf"
+  - Key: "asset_id"
+    Value: "dmfcloud"
+  - Key: "system_id"
+    Value: "dmfcloud"

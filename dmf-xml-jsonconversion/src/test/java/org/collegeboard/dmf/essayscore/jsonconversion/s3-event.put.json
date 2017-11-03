@@ -1,0 +1,40 @@
+{
+    "Records": [
+        {
+            "awsRegion": "us-east-1",
+            "eventName": "ObjectCreated:Put",
+            "eventSource": "aws:s3",
+            "eventTime": "2017-04-11T20:12:33.195Z",
+            "eventVersion": "2.0",
+            "requestParameters": {
+                "sourceIPAddress": "209.48.35.43"
+            },
+            "responseElements": {
+                "x-amz-id-2": "f6hqXYNpb1r8dALqSxnrRT1SndTlQ/RqsRDwO6bKH/V6z2TRRkYrbjret+4rinVYMBG4lkX7vIQ=",
+                "x-amz-request-id": "E8AD3E8D73AE8535"
+            },
+            "s3": {
+                "configurationId": "d2c3b87c-c3bc-4cfc-ab8b-ed90e463532e",
+                "bucket": {
+                    "name": "dev-dmf-asmtresponse",
+                    "ownerIdentity": {
+                        "principalId": "A1GE9PKUOUHKEV"
+                    },
+                    "arn": "arn:aws:s3:::dev-dmf-asmtresponse"
+                },
+                "object": {
+                    "key": "AIR_Send_Response_Test_AIR_Test_Respose_Data.xml",
+                    "size": 39398,
+                    "eTag": "7c86cd81200e3fc94c5d15f88a567039",
+                    "versionId": null,
+                    "sequencer": "0058ED38B11553D857",
+                    "urlDecodedKey": "EssayScore_158078121284300001"
+                },
+                "s3SchemaVersion": "1.0"
+            },
+            "userIdentity": {
+                "principalId": "AWS:AIDAJMQESA5AP4CLVT6XQ"
+            }
+        }
+    ]
+}

@@ -1,0 +1,46 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "AWS CloudFormation Template for {{stack_name}}",
+  "Resources" : {
+    "XmlJsonConversionLmdaRole":{
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {{ xml_json_conversion_lmda_assumerole_policy }},
+        "ManagedPolicyArns": {{xml_json_conversion_lmda_role_managed_policy_arns|to_json}},
+        "Policies": [ {
+          "PolicyName": "{{xml_json_conversion_lmda_sns_policy_name}}",
+          "PolicyDocument":{{xml_json_conversion_lmda_sns_policy}}
+          },
+          {
+            "PolicyName": "{{xml_json_conversion_lmda_s3_policy_name}}",
+            "PolicyDocument":{{xml_json_conversion_lmda_s3_policy}}
+          },
+          {
+            "PolicyName": "{{xml_json_conversion_lmda_kms_policy_name}}",
+            "PolicyDocument":{{xml_json_conversion_lmda_kms_policy}}
+          }],
+        "RoleName": "{{xml_json_conversion_lmda_role_name}}"
+      }
+    },
+    "XmlJsonConversionLmda":{
+      "Type" : "AWS::Lambda::Function",
+      "Properties" : {
+        "Code" : {
+          "S3Bucket": "{{dmf_lambda_artifacts_s3}}",
+          "S3Key": "{{xml_json_conversion_lmda_code_s3_key}}"
+        },
+        "Description" : "{{xml_json_conversion_lmda_description}}",
+        "FunctionName" : "{{xml_json_conversion_lmda_function_name}}",
+        "Environment": {
+          "Variables": {{xml_json_conversion_lmda_environment}}
+          },
+        "Handler" : "{{xml_json_conversion_lmda_handler}}",
+        "MemorySize" : {{xml_json_conversion_lmda_memory_size}},
+        "Role" : { "Fn::GetAtt" : ["XmlJsonConversionLmdaRole", "Arn"] },
+        "Runtime" : "{{xml_json_conversion_lmda_runtime}}",
+        "Timeout" : {{xml_json_conversion_lmda_timeout}},
+        "Tags" : {{xml_json_conversion_lmda_tags|to_json}}
+      }
+    }
+  }
+}

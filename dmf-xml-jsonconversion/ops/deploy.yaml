@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - 'vars/defaults.yaml'
+    - 'vars/{{env}}-overrides.yaml'
+
+
+  tasks:
+
+    - name: Create temp folder
+      file:
+        path: "temp"
+        state: directory
+
+    - name: Prepare CF templates
+      template: src=cfn/stack.json dest=temp/stack.json
+
+    - name: Create/update {{stack_name}}
+      cloudformation:
+        stack_name: "{{stack_name}}"
+        state: present
+        region: "{{dmf_aws_region}}"
+        disable_rollback: true
+        template: "temp/stack.json"

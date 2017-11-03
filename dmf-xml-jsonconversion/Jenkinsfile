@@ -1,0 +1,129 @@
+node
+{
+	try
+	{
+  	def asset="dmf-xml-jsonconversion"
+    def selectedEnvironment="${params.Environment}"
+    def selectedVersion="${params.Version}"
+    def newVersion
+    echo("selected environment:${params.Environment},version:${params.Version}")
+      /**Below script gets the version number from last created .zip file name from s3 bucket.
+				*If environment param is "dev" then increases the minor version by 1 else return last created file version number
+				*/
+        newVersion=sh(returnStdout: true, script: '''#!/bin/bash
+                    inputVersion='''+selectedVersion+'''
+                    inputEnvironment='''+selectedEnvironment+'''                    
+                    lastFile=$(aws s3 ls s3://dmf-artifacts/'''+asset+''' --recursive | grep '''+asset+'''/'''+asset+'''-${inputVersion}.*.zip|sort | tail -n 1 | awk '{print $4}')
+                    if [ "$lastFile" == "" ]; then
+	                    if [ $inputEnvironment == "dev" ]; then
+		                    nextVersion="$inputVersion".0
+		                    echo $nextVersion
+	                    else
+		                    echo ""
+	                    fi
+	               else
+	                    lastFileVersionExtension="${lastFile##*-}"
+	                    lastFileVersion="${lastFileVersionExtension%.*}"
+	                    if [ "$inputEnvironment" == "dev" ]; then
+		                    lastFileMajorVersion="${lastFileVersion%.*}"
+		                    lastFileMinorVersion="${lastFileVersion##*.}"
+		                    nextMinorVersion=$((lastFileMinorVersion+1))
+		                    nextVersion="$lastFileMajorVersion.$nextMinorVersion"
+		                    echo $nextVersion
+	                    else
+		                    echo $lastFileVersion
+	                    fi
+                    fi'''
+            ).trim()
+        echo("new version:${newVersion}")
+
+    if(newVersion == ""){
+        throw new Exception("Invalid version")
+    }
+
+    currentBuild.displayName = "${selectedEnvironment}-${newVersion}"
+
+    if(selectedEnvironment == "dev"){
+        stage ('scm'){
+            git branch: 'master', credentialsId: '5ffddf09-8dcc-41bb-853e-12afbbd914a1', url: 'https://bitbucket.collegeboard.org/scm/dmf/dmfcloud.git'
+        }
+    		stage ('build'){
+    			sh '''#!/bin/bash -l
+               	cd '''+asset+'''
+			   	 			gradle --version
+			   				gradle tasks
+          			gradle --no-daemon -I init.gradle clean buildZip'''
+
+          sh '''#!/bin/bash -l
+          			cd '''+asset+'''/build/distributions
+            		mv '''+asset+'''.zip '''+asset+'''-'''+newVersion+'''.zip'''
+        }
+
+				stage ('publish to s3') {
+        	echo 'publishing to repository'
+
+					// the s3 bucket for the artifacts will be created during jenkins provisioning at set as an environment variable to be
+					// referenced by the Jenkinsfile
+
+           	sh "aws s3 cp ${asset}/build/distributions/${asset}-${newVersion}.zip s3://dmf-artifacts/${asset}/${asset}-${newVersion}.zip"
+       	}
+
+       	if (!newVersion.startsWith("9.9.9."))
+	    	{
+	        stage ('tagging') {
+	            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: '5ffddf09-8dcc-41bb-853e-12afbbd914a1',
+		        	usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD']])
+    	        {
+        	        echo('git user name $GIT_USERNAME')
+    	            sh("git config user.name ${GIT_USERNAME}")
+                    sh("git config user.email 'rgorthi@collegeboard.org'")
+                    sh "git tag -a ${asset}-${newVersion} -f -m 'Adding tag ${asset}-${newVersion}'"
+                    sh "git push -f https://${GIT_USERNAME}:${GIT_PASSWORD}@bitbucket.collegeboard.org/scm/dmf/dmfcloud.git ${asset}-${newVersion}"
+              }
+	        }
+	    	}
+    }else{
+			def tagName="refs/tags/"+asset+"-"+newVersion
+			echo "tagName:${tagName}"
+
+			stage ('scm'){
+				checkout([$class: 'GitSCM',
+					branches: [[name: tagName]], doGenerateSubmoduleConfigurations: false, extensions: [],
+					submoduleCfg: [], userRemoteConfigs: [[credentialsId: '5ffddf09-8dcc-41bb-853e-12afbbd914a1', url: 'https://bitbucket.collegeboard.org/scm/dmf/dmfcloud.git']]])
+			}
+		}
+
+    stage ('deploy to '+selectedEnvironment){
+				def towercredentialsId
+				def towerTemplateId
+				if(selectedEnvironment == "pine"){
+					towercredentialsId="14d2e00c-96d1-4867-bfd8-a32616464bde"
+					towerTemplateId="28"
+				}else{
+					towercredentialsId="ecd3a34c-4482-4148-84e9-c4bda05d12c0"
+					towerTemplateId="16"
+				}
+
+      	withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: towercredentialsId,
+        usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD']]) {
+        	echo 'todo -deploying via ansible'
+          sh "chmod +x ${asset}/ops/launch-tower-job.sh"
+          sh script: "./${asset}/ops/launch-tower-job.sh ${asset} ${selectedEnvironment} ${newVersion} ${towerTemplateId} ${PASSWORD}"
+      	}
+    }
+	}catch(err)
+	{
+			echo("Error: ${err}")
+			notify("Error: ${err}")
+			currentBuild.result = 'FAILURE'
+	}
+}
+
+def notify(status){
+	emailext (
+		to: "rgorthi@collegeboard.org",
+		subject: "${status}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+		body: """<p>${status}: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+			<p>Check console output at <a href='${env.BUILD_URL}'>${env.JOB_NAME} [${env.BUILD_NUMBER}]</a></p>""",
+		)
+}

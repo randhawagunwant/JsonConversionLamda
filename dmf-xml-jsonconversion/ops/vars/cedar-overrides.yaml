@@ -1,0 +1,9 @@
+---
+dmf_aws_vpc_id: vpc-c12a93a7
+dmf_aws_subnet_ids:
+  - "subnet-5f771c04"
+  - "subnet-60f2d129"
+  - "subnet-f62e53db"
+dmf_aws_security_group_id: "sg-879b8bf9"
+dmf_aws_account_id: 533035462457
+dmf_s3_key_id: "09d52534-316e-40fc-83cf-260853db5dc5"
